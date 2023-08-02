@@ -1,51 +1,49 @@
 # frozen_string_literal: true
+
 require 'json'
-require "zlib"
-require "maxmind/db"
+require 'zlib'
+require 'maxmind/db'
+require_relative 'log'
 
 class Reporter
-  NGINX_LOG_REGEX = /^(((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}).*\"(((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4})\"$/
 
 
   def initialize
-    @max_mind = MaxMind::DB.new("#{base_path}/../db/geo_ip.mmdb")
     collect_logs
   end
 
   private
 
   def collect_logs
-    all = []
+    nginx_logs = []
     Dir["#{base_path}/../logs/*.gz"].each do |f|
       begin
         decompressed = Zlib.gunzip(File.read(f))
-        nginx_logs = extract_nginx_logs(decompressed)
-        all += nginx_logs
+        nginx_logs += extract_nginx_logs(decompressed)
       rescue Zlib::DataError, Zlib::GzipFile::CRCError
       end
     end
 
-    messages = all.map { |l| l['message'] }.select { |l| l.match?(NGINX_LOG_REGEX) }
-
-    puts messages.map { |l| l.match(NGINX_LOG_REGEX)[5] }.map {|ip| country_code(ip)}.tally.sort_by {|_k, v| v}.map{|l| l.join(' -> ')}.join("\n")
-  end
-
-  def base_path
-    File.dirname(File.expand_path($0))
-  end
-
-  def extract_nginx_logs(logs)
-    logs.lines.map do |l|
-      JSON.parse(l)
-    end.select do |l|
-      l['kubernetes']['container_name'] == 'nginx'
+    grouped_by_month(nginx_logs).each do |month, logs|
+      puts [month, logs.map(&:country_code).tally.sort_by { |_k, v| v }.map { |l| l.join(' -> ') }.join("\n")].join("\n\n")
     end
   end
 
-  def country_code(ip_address)
-    @max_mind.get(ip_address).dig('country', 'iso_code')
+  def base_path
+    File.dirname(File.expand_path($PROGRAM_NAME))
   end
 
+  def extract_nginx_logs(logs)
+    logs.lines.map do |log|
+      Log.new(log)
+    end.select(&:nginx?)
+  end
+
+  def grouped_by_month(logs)
+    logs.group_by do |log|
+      log.timestamp.strftime('%Y.%m')
+    end
+  end
 end
 
 Reporter.new
