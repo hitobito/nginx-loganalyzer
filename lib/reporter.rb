@@ -2,6 +2,7 @@
 
 require 'json'
 require 'zlib'
+require 'stringio'
 require 'maxmind/db'
 require_relative 'log'
 
@@ -19,11 +20,9 @@ class Reporter
   def collect_logs
     nginx_logs = []
     Dir["#{base_path}/../logs/*.gz"].each do |f|
-      begin
-        decompressed = Zlib.gunzip(File.read(f))
-        nginx_logs += extract_nginx_logs(decompressed)
-      rescue Zlib::DataError, Zlib::GzipFile::CRCError
-      end
+      gz = Zlib::GzipReader.new(StringIO.new(File.read(f)))
+      nginx_logs += extract_nginx_logs(gz.read)
+      gz.close
     end
 
     grouped_by_month(nginx_logs).each do |month, logs|
