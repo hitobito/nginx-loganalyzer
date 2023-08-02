@@ -9,6 +9,8 @@ class Reporter
 
 
   def initialize
+    puts 'Land -> # Requests total / # davon authentifiziert'
+
     collect_logs
   end
 
@@ -25,7 +27,11 @@ class Reporter
     end
 
     grouped_by_month(nginx_logs).each do |month, logs|
-      puts [month, logs.map(&:country_code).tally.sort_by { |_k, v| v }.map { |l| l.join(' -> ') }.join("\n")].join("\n\n")
+      g = grouped_by_country(logs)
+      a = g.map do |country, l|
+        [country, [l.size, l.count(&:authorized?)].join(' / ')].join(' -> ')
+      end.join("\n")
+      puts [month, a].join("\n\n")
     end
   end
 
@@ -43,6 +49,10 @@ class Reporter
     logs.group_by do |log|
       log.timestamp.strftime('%Y.%m')
     end
+  end
+
+  def grouped_by_country(logs)
+    logs.group_by(&:country_code).sort_by { |_c, l| l.size }
   end
 end
 

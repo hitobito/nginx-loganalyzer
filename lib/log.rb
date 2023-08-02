@@ -4,7 +4,7 @@ require_relative 'geo_ip'
 require 'date'
 
 class Log
-  NGINX_LOG_REGEX = /^(((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}) - - \[(.*?)\].*\"(((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4})\"$/
+  NGINX_LOG_REGEX = /^(((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}) - - \[(.*?)\] \"(GET|POST|PUT|DELETE)(.*) HTTP.*\"(((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4})\"$/
 
   attr_reader :body, :log_message
 
@@ -23,8 +23,16 @@ class Log
 
   def country_code
     @country_code ||= begin
-      ip = log_message.match(NGINX_LOG_REGEX)[6]
+      ip = log_message.match(NGINX_LOG_REGEX)[8]
       GeoIp.instance.country_code(ip)
     end
+  end
+
+  def authorized?
+    %w[healthz sign_in].none? { |s| url.include?(s) }
+  end
+
+  def url
+    @url ||= log_message.match(NGINX_LOG_REGEX)[7].strip
   end
 end
