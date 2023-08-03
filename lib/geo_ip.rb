@@ -6,7 +6,7 @@ class GeoIp
   include Singleton
 
   def initialize
-    @max_mind = MaxMind::DB.new("#{base_path}/../db/geo_ip.mmdb")
+    @max_mind = MaxMind::DB.new("#{base_path}/db/geo_ip.mmdb")
   end
 
   def country_code(ip_address)

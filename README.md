@@ -2,15 +2,14 @@
 
 ## Usage
 
-### 1. Download Log files from Kibana
+### 1. Fetch logs
 
-1. Access your Kibana instance by Firefox
-2. Open network tab in developer tools
-3. Apply your search to retrieve all Nginx Log entries
-4. Save response as .har file to `./logs` directory in this git repo
+Place the logs as `.gz` files under `logs/`
 
-![firefox-screenshot](/doc/img/firefox-har.png)
+### 2. Prepare GeoIp DB
 
-### 2. Run script
+Fetch the geo ip db and place it under `db/geo_ip.mmdb`
+
+### 3. Run script
 
 `./report`

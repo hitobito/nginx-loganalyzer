@@ -32,7 +32,7 @@ class Reporter
 
   def extract_nginx_logs
     nginx_logs = []
-    Dir["#{base_path}/../logs/*.gz"].each do |f|
+    Dir["#{base_path}/logs/*.gz"].each do |f|
       gz = Zlib::GzipReader.new(StringIO.new(File.read(f)))
       nginx_logs += initialize_logs(gz.read)
       gz.close
@@ -56,5 +56,3 @@ class Reporter
     logs.group_by(&:country_code).sort_by { |_c, l| l.size }
   end
 end
-
-Reporter.new
