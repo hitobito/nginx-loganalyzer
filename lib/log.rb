@@ -4,7 +4,7 @@ require_relative 'geo_ip'
 require 'date'
 
 class Log
-  NGINX_LOG_REGEX = /^(((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}) - - \[(.*?)\] \"(GET|POST|PUT|DELETE)(.*) HTTP.*\"(((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4})\"$/
+  NGINX_LOG_REGEX = /^(((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}) - - \[(.*?)\] "(GET|POST|PUT|DELETE)(.*) HTTP.*"(((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4})"$/
 
   attr_reader :body, :log_message
 
@@ -29,7 +29,10 @@ class Log
   end
 
   def authorized?
-    %w[healthz sign_in].none? { |s| url.include?(s) }
+    %w[healthz sign_in locale robots favicon
+       changelog wp-login logo well-known .env].none? { |s| url.include?(s) } &&
+      !['/fr/', '/en/', '/de/', '/it/', '/'].include?(url) &&
+      !['/fr', '/en', '/de', '/it'].include?(url)
   end
 
   def url
