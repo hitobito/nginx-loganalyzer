@@ -4,6 +4,7 @@ require_relative 'geo_ip'
 require 'date'
 
 class Log
+  # e.g 12.123.0.1 - - [05/Jul/2023:07:15:27 +0000] \"GET /de/users/sign_in HTTP/1.1\" 200 4869 \"-\" \"Blackbox Exporter/0.24.0\" \"9.876.543.210\"
   NGINX_LOG_REGEX = /^(((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}) - - \[(.*?)\] "(GET|POST|PUT|DELETE)(.*) HTTP.*"(((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4})"$/
 
   attr_reader :body, :log_message
