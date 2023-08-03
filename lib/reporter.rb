@@ -7,8 +7,6 @@ require 'maxmind/db'
 require_relative 'log'
 
 class Reporter
-
-
   def initialize
     puts 'Land -> # Requests total / # davon authentifiziert'
 
@@ -18,19 +16,13 @@ class Reporter
   private
 
   def collect_logs
-    nginx_logs = []
-    Dir["#{base_path}/../logs/*.gz"].each do |f|
-      gz = Zlib::GzipReader.new(StringIO.new(File.read(f)))
-      nginx_logs += extract_nginx_logs(gz.read)
-      gz.close
-    end
+    nginx_logs = extract_nginx_logs
 
     grouped_by_month(nginx_logs).each do |month, logs|
-      g = grouped_by_country(logs)
-      a = g.map do |country, l|
+      output_for_month = grouped_by_country(logs).map do |country, l|
         [country, [l.size, l.count(&:authorized?)].join(' / ')].join(' -> ')
       end.join("\n")
-      puts [month, a].join("\n\n")
+      puts [month, output_for_month].join("\n\n")
     end
   end
 
@@ -38,7 +30,17 @@ class Reporter
     File.dirname(File.expand_path($PROGRAM_NAME))
   end
 
-  def extract_nginx_logs(logs)
+  def extract_nginx_logs
+    nginx_logs = []
+    Dir["#{base_path}/../logs/*.gz"].each do |f|
+      gz = Zlib::GzipReader.new(StringIO.new(File.read(f)))
+      nginx_logs += initialize_logs(gz.read)
+      gz.close
+    end
+    nginx_logs
+  end
+
+  def initialize_logs(logs)
     logs.lines.map do |log|
       Log.new(log)
     end.select(&:nginx?)
